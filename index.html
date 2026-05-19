@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกข้อมูลประจำวัน ทหารใหม่</title>
+    
+    <style>
+        /* ตั้งค่าพื้นหลังของหน้าจอเบื้องหลังภายนอกแอป */
+        body {
+            font-family: 'Noto Sans Thai', sans-serif;
+            background-color: #f1f5f9; /* สีเทาสว่างสบายตา */
+            padding: 1rem;
+        }
+
+        /* 🎯 ปรับแต่งกล่องแอปหลักให้เป็นพื้นหลังม่วงเข้มขอบเขียวทหาร */
+        .app-container {
+            /* 1. พื้นหลังม่วงเข้ม */
+            background-color: #2e0854; 
+            
+            /* 2. ขอบสีเขียวทหาร/เขียวเข้ม หนา 3 พิกเซลให้เห็นเด่นชัด */
+            border: 3px solid #16a34a; 
+            
+            /* 3. ปรับระยะห่างข้างใน และทำให้มุมของกล่องแอปโค้งมน */
+            padding: 1.5rem;
+            border-radius: 1.5rem;
+        }
+
+        /* ตกแต่งกล่องข้อมูลสีปัสสาวะ (สีเหลืองน้ำผึ้งโปร่งแสง) */
+        .bg-urine-section {
+            background-color: rgba(254, 243, 199, 0.6);
+        }
+
+        /* ตกแต่งกล่องข้อมูลอุณหภูมิ (สีฟ้าอ่อนโปร่งแสง) */
+        .bg-temp-section {
+            background-color: rgba(219, 234, 254, 0.6);
+        }
+
+        /* ช่วยขับให้ช่อง Input/Select เด่นขึ้นมาเวลาผู้ใช้คลิกพิมพ์ */
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4f46e5 !important;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <div class="max-w-7xl mx-auto app-container shadow-2xl my-4">
+        
+        <header class="mb-6 text-center md:text-left bg-white p-4 rounded-2xl shadow-xs border border-gray-100 flex flex-col md:flex-row items-center gap-4">
+            <div class="w-16 h-16 shrink-0 overflow-hidden flex items-center justify-center">
+                <img src="https://i.ibb.co/2rKmPhv/2-2.png" id="appLogo" alt="Logo" class="w-full h-full object-contain">
+            </div>
+            <div class="grow text-center md:text-left">
+                <h1 class="text-2xl font-bold text-indigo-700 flex items-center justify-center md:justify-start gap-2">
+                    📊 ระบบบันทึกและคัดกรองข้อมูลประจำวัน ทหารใหม่
+                </h1>
+                <p class="text-sm text-gray-500 mt-1">บันทึกข้อมูลแยกตามหมวด-หมู่ และรายงานผลตัวเลขสีปัสสาวะ/อุณหภูมิร่างกาย</p>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            
+            <section class="xl:col-span-1 bg-white p-5 rounded-2xl shadow-xs border border-gray-100 h-fit space-y-4">
+                <div class="flex items-center gap-2 border-b border-gray-100 pb-2">
+                    <span class="text-xl">📝</span>
+                    <h2 class="text-lg font-semibold text-gray-700">สำหรับบันทึกข้อมูล</h2>
+                </div>
+                
+                <form id="recordForm" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="sm:col-span-1">
+                            <label class="block text-xs font-medium text-gray-600 mb-1">วันที่ตรวจ</label>
+                            <input type="date" id="inputDate" required class="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">หมวด</label>
+                            <select id="inputCategory" required class="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg bg-white">
+                                <option value="">-- เลือก --</option>
+                                <option value="หมวด 1">หมวด 1</option>
+                                <option value="หมวด 2">หมวด 2</option>
+                                <option value="หมวด 3">หมวด 3</option>
+                                <option value="หมวด 4">หมวด 4</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">หมู่</label>
+                            <select id="inputGroup" required class="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg bg-white">
+                                <option value="">-- เลือก --</option>
+                                <option value="หมู่ 1">หมู่ 1</option>
+                                <option value="หมู่ 2">หมู่ 2</option>
+                                <option value="หมู่ 3">หมู่ 3</option>
+                                <option value="หมู่ 4">หมู่ 4</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="bg-urine-section p-3 rounded-xl border border-amber-100 space-y-2">
+                        <span class="text-xs font-bold text-amber-800 block">🥛 ชุดที่ 1: จำนวนคนแยกตามสีปัสสาวะ</span>
+                        <div class="grid grid-cols-5 gap-2">
+                            <div>
+                                <label class="block text-[10px] text-center text-gray-600">สีที่ 0</label>
+                                <input type="number" id="urine0" min="0" value="0" required class="w-full text-center p-1 text-sm border border-gray-300 rounded-md bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-center text-gray-600">สีที่ 1</label>
+                                <input type="number" id="urine1" min="0" value="0" required class="w-full text-center p-1 text-sm border border-gray-300 rounded-md bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-center text-gray-600">สีที่ 2</label>
+                                <input type="number" id="urine2" min="0" value="0" required class="w-full text-center p-1 text-sm border border-gray-300 rounded-md bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-center text-gray-600">สีที่ 3</label>
+                                <input type="number" id="urine3" min="0" value="0" required class="w-full text-center p-1 text-sm border border-gray-300 rounded-md bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-center text-gray-600">สีที่ 4</label>
+                                <input type="number" id="urine4" min="0" value="0" required class="w-full text-center p-1 text-sm border border-gray-300 rounded-md bg-white">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-temp-section p-3 rounded-xl border border-blue-100 space-y-2">
+                        <span class="text-xs font-bold text-blue-800 block">🌡️ ชุดที่ 2: จำนวนคนแยกตามอุณหภูมิร่างกาย</span>
+                        <div class="space-y-2 text-xs">
+                            <div class="flex items-center justify-between gap-2">
+                                <label class="text-gray-600 text-left">ต่ำกว่า 36.8 °C</label>
+                                <input type="number" id="tempLow" min="0" value="0" required class="w-24 text-center p-1 border border-gray-300 rounded-md bg-white">
+                            </div>
+                            <div class="flex items-center justify-between gap-2">
+                                <label class="text-gray-600 text-left">36.8 - 37.2 °C</label>
+                                <input type="number" id="tempNormal" min="0" value="0" required class="w-24 text-center p-1 border border-gray-300 rounded-md bg-white">
+                            </div>
+                            <div class="flex items-center justify-between gap-2">
+                                <label class="text-gray-600 text-left">มากกว่า 37.2 °C</label>
+                                <input type="number" id="tempHigh" min="0" value="0" required class="w-24 text-center p-1 border border-gray-300 rounded-md bg-white">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 cursor-pointer shadow-xs text-sm">
+                        💾 บันทึกข้อมูลสถิติ
+                    </button>
+                </form>
+            </section>
+
+            <section class="xl:col-span-2 bg-white p-5 rounded-2xl shadow-xs border border-gray-100 space-y-4">
+                <div class="flex items-center gap-2 border-b border-gray-100 pb-2">
+                    <span class="text-xl">🔍</span>
+                    <h2 class="text-lg font-semibold text-gray-700">สำหรับค้นข้อมูล (ค้นหาแบบระบุเงื่อนไขคละกันได้)</h2>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-xl grid grid-cols-2 md:grid-cols-4 gap-3 items-end text-xs">
+                    <div>
+                        <label class="block font-medium text-gray-500 mb-1">วันที่</label>
+                        <input type="date" id="searchDate" class="w-full p-1.5 border border-gray-300 rounded-md bg-white">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-gray-500 mb-1">หมวด</label>
+                        <select id="searchCategory" class="w-full p-1.5 border border-gray-300 rounded-md bg-white">
+                            <option value="all">-- ทั้งหมด --</option>
+                            <option value="หมวด 1">หมวด 1</option>
+                            <option value="หมวด 2">หมวด 2</option>
+                            <option value="หมวด 3">หมวด 3</option>
+                            <option value="หมวด 4">หมวด 4</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-medium text-gray-500 mb-1">หมู่</label>
+                        <select id="searchGroup" class="w-full p-1.5 border border-gray-300 rounded-md bg-white">
+                            <option value="all">-- ทั้งหมด --</option>
+                            <option value="หมู่ 1">หมู่ 1</option>
+                            <option value="หมู่ 2">หมู่ 2</option>
+                            <option value="หมู่ 3">หมู่ 3</option>
+                            <option value="หมู่ 4">หมู่ 4</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-1.5">
+                        <button type="button" id="btnSearch" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1.5 rounded-md transition cursor-pointer">ค้นหา</button>
+                        <button type="button" id="btnClear" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-1.5 rounded-md transition cursor-pointer">รีเซ็ต</button>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-base font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                        📊 รายการข้อมูลที่พบ 
+                        <span id="recordCount" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">0</span>
+                    </h3>
+                    
+                    <div class="overflow-x-auto rounded-xl border border-gray-200 text-xs">
+                        <table class="w-full text-left border-collapse bg-white">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 font-semibold border-b border-gray-200 text-center">
+                                    <th class="p-2.5 text-left" rowspan="2">วันที่</th>
+                                    <th class="p-2.5" rowspan="2">หมวด/หมู่</th>
+                                    <th class="p-1.5 bg-amber-100/70 text-amber-900 border-b border-gray-200" colspan="5">สีปัสสาวะ (จำนวนคน)</th>
+                                    <th class="p-1.5 bg-blue-100/70 text-blue-900 border-b border-gray-200" colspan="3">อุณหภูมิร่างกาย (จำนวนคน)</th>
+                                    <th class="p-2.5 text-center" rowspan="2">จัดการ</th>
+                                </tr>
+                                <tr class="bg-gray-50 text-gray-500 text-[10px] text-center border-b border-gray-200">
+                                    <th class="p-1 border-r border-gray-200 bg-amber-50/30">สี 0</th>
+                                    <th class="p-1 border-r border-gray-200 bg-amber-50/30">สี 1</th>
+                                    <th class="p-1 border-r border-gray-200 bg-amber-50/30">สี 2</th>
+                                    <th class="p-1 border-r border-gray-200 bg-amber-50/30">สี 3</th>
+                                    <th class="p-1 border-r border-gray-200 bg-amber-50/30">สี 4</th>
+                                    <th class="p-1 border-r border-gray-200 bg-blue-50/30">&lt;36.8</th>
+                                    <th class="p-1 border-r border-gray-200 bg-blue-50/30">36.8-37.2</th>
+                                    <th class="p-1 bg-blue-50/30">&gt;37.2</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody" class="divide-y divide-gray-100 text-center">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // กำหนดลิงก์ปลายทางไปยังเซิร์ฟเวอร์ Firebase Realtime Database กลาง
+        const FIREBASE_URL = "https://healthysoldier-b83ec-default-rtdb.asia-southeast1.firebasedatabase.app"; 
+
+        const recordForm = document.getElementById("recordForm");
+        const tableBody = document.getElementById("tableBody");
+        const btnSearch = document.getElementById("btnSearch");
+        const btnClear = document.getElementById("btnClear");
+        const recordCount = document.getElementById("recordCount");
+
+        // ตั้งค่าปฏิทินให้เป็นวันปัจจุบันอัตโนมัติ
+        document.getElementById("inputDate").valueAsDate = new Date();
+
+        // สั่งทำงานดึงข้อมูลจาก Cloud มาโชว์ทันที
+        fetchOnlineData();
+
+        // 📥 ฟังก์ชันดึงข้อมูลแบบ Realtime จาก Firebase
+        async function fetchOnlineData() {
+            try {
+                const response = await fetch(`${FIREBASE_URL}/records.json`);
+                const data = await response.json();
+                
+                let recordsArray = [];
+                if (data) {
+                    recordsArray = Object.keys(data).map(key => ({
+                        id: key,
+                        ...data[key]
+                    }));
+                }
+                
+                // ฝากก๊อปปี้ข้อมูลสำรองไว้ที่ระดับหน้าต่างเพื่อใช้กรองค้นหาคละกัน
+                window.allRecords = recordsArray;
+                displayData(recordsArray);
+            } catch (error) {
+                console.error("เกิดข้อผิดพลาดในการโหลดข้อมูล:", error);
+            }
+        }
+
+        // 💾 ระบบดักฟอร์มเพื่ออัปโหลดบันทึกออนไลน์
+        recordForm.addEventListener("submit", async function(e) {
+            e.preventDefault();
+
+            const newRecord = {
+                date: document.getElementById("inputDate").value,
+                category: document.getElementById("inputCategory").value,
+                group: document.getElementById("inputGroup").value,
+                urine0: parseInt(document.getElementById("urine0").value) || 0,
+                urine1: parseInt(document.getElementById("urine1").value) || 0,
+                urine2: parseInt(document.getElementById("urine2").value) || 0,
+                urine3: parseInt(document.getElementById("urine3").value) || 0,
+                urine4: parseInt(document.getElementById("urine4").value) || 0,
+                tempLow: parseInt(document.getElementById("tempLow").value) || 0,
+                tempNormal: parseInt(document.getElementById("tempNormal").value) || 0,
+                tempHigh: parseInt(document.getElementById("tempHigh").value) || 0
+            };
+
+            try {
+                await fetch(`${FIREBASE_URL}/records.json`, {
+                    method: "POST",
+                    body: JSON.stringify(newRecord),
+                    headers: { "Content-Type": "application/json" }
+                });
+
+                alert("🎉 บันทึกข้อมูลขึ้นระบบออนไลน์สำเร็จแล้ว!");
+                recordForm.reset();
+                document.getElementById("inputDate").valueAsDate = new Date();
+                fetchOnlineData(); // สั่งรีเฟรชตารางใหม่
+            } catch (error) {
+                alert("💥 เกิดข้อผิดพลาดออนไลน์ ไม่สามารถบันทึกได้");
+            }
+        });
+
+        // 🔍 ระบบกรองข้อมูลคละหมวดคละหมู่ในคราวเดียว
+        btnSearch.addEventListener("click", function() {
+            const sDate = document.getElementById("searchDate").value;
+            const sCategory = document.getElementById("searchCategory").value;
+            const sGroup = document.getElementById("searchGroup").value;
+            
+            const records = window.allRecords || [];
+
+            const filtered = records.filter(function(r) {
+                const matchDate = sDate === "" || r.date === sDate;
+                const matchCategory = sCategory === "all" || r.category === sCategory;
+                const matchGroup = sGroup === "all" || r.group === sGroup;
+                return matchDate && matchCategory && matchGroup;
+            });
+
+            displayData(filtered);
+        });
+
+        // ปุ่มล้างตัวกรองทั้งหมด
+        btnClear.addEventListener("click", function() {
+            document.getElementById("searchDate").value = "";
+            document.getElementById("searchCategory").value = "all";
+            document.getElementById("searchGroup").value = "all";
+            displayData(window.allRecords || []);
+        });
+
+        // 🗑️ ระบบยิงคำสั่งลบข้อมูลบน Cloud Firebase แบบชี้เป้าด้วยคีย์ไอดี
+        async function deleteRecord(firebaseId) {
+            if (confirm("คุณแน่ใจใช่ไหมว่าจะลบข้อมูลรายการนี้ออกจากระบบออนไลน์?")) {
+                try {
+                    await fetch(`${FIREBASE_URL}/records/${firebaseId}.json`, {
+                        method: "DELETE"
+                    });
+                    fetchOnlineData();
+                } catch (error) {
+                    alert("ไม่สามารถลบข้อมูลได้ กรุณาลองใหม่");
+                }
+            }
+        }
+
+        // ฟังก์ชันในการสร้างและจัดระเบียบตารางรายงานผล
+        function displayData(arrayData) {
+            tableBody.innerHTML = "";
+            recordCount.innerText = arrayData.length;
+
+            if (arrayData.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="11" class="p-6 text-center text-gray-400 italic bg-gray-50">📭 ไม่พบข้อมูลที่กรอง</td></tr>`;
+                return;
+            }
+
+            // จัดเรียงไทม์ไลน์โดยดึงวันที่ล่าสุดขึ้นมาแสดงด้านบนก่อนเสมอ
+            const sorted = [...arrayData].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            sorted.forEach(function(item) {
+                const fDate = item.date ? item.date.split('-').reverse().join('/') : '-';
+                
+                const row = `
+                    <tr class="hover:bg-gray-50/80 transition text-gray-700 bg-white">
+                        <td class="p-2 text-left font-medium text-gray-900">${fDate}</td>
+                        <td class="p-2">
+                            <span class="block font-semibold text-indigo-600">${item.category}</span>
+                            <span class="text-[10px] text-gray-500">${item.group}</span>
+                        </td>
+                        <td class="p-2 border-r border-gray-100 bg-amber-50/10 font-mono">${item.urine0}</td>
+                        <td class="p-2 border-r border-gray-100 bg-amber-50/10 font-mono">${item.urine1}</td>
+                        <td class="p-2 border-r border-gray-100 bg-amber-50/10 font-mono">${item.urine2}</td>
+                        <td class="p-2 border-r border-gray-100 bg-amber-50/10 font-mono">${item.urine3}</td>
+                        <td class="p-2 border-r border-gray-100 bg-amber-50/10 font-mono">${item.urine4}</td>
+                        <td class="p-2 border-r border-gray-100 bg-blue-50/10 font-mono">${item.tempLow}</td>
+                        <td class="p-2 border-r border-gray-100 bg-blue-50/10 font-mono">${item.tempNormal}</td>
+                        <td class="p-2 bg-blue-50/10 font-mono">${item.tempHigh}</td>
+                        <td class="p-2">
+                            <button onclick="deleteRecord('${item.id}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 px-1.5 py-0.5 rounded-md transition cursor-pointer text-[11px]">
+                                ลบ
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+        }
+    </script>
+</body>
+</html>
