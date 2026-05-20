@@ -65,11 +65,11 @@
         <div class="text-4xl">🪪</div>
         <div>
             <h3 class="text-lg font-bold text-purple-950">ลงทะเบียนผู้บันทึกข้อมูล</h3>
-            <p class="text-xs text-gray-500 mt-1">โปรดระบุชื่อและเลือกหน่วยสังกัด</p>
+            <p class="text-xs text-gray-500 mt-1">โปรดเลือกหน่วยสังกัด (ระบุชื่อหรือไม่ก็ได้)</p>
         </div>
         <div class="space-y-3 text-left">
             <div>
-                <label class="block text-xs font-bold text-gray-600 mb-1">สังกัดหน่วยฝึก</label>
+                <label class="block text-xs font-bold text-gray-600 mb-1">สังกัดหน่วยฝึก <span class="text-red-500">*จำเป็น</span></label>
                 <select id="modalBattalion" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white font-semibold text-purple-950">
                     <option value="">-- เลือกหน่วย --</option>
                     <option value="ร.2 พัน.1 รอ.">ร.2 พัน.1 รอ.</option>
@@ -449,16 +449,26 @@
         modalBattalion.value = "";
     });
 
+    // 🔄 ปรับเปลี่ยนตรรกะปุ่ม "ไม่ระบุผู้ลง" ให้ผูกเงื่อนไขกับหน่วยฝึก
     btnSkipLogin.addEventListener("click", function() {
+        const selectedBat = modalBattalion.value;
+        
+        // บังคับให้เลือกหน่วยก่อน แม้จะไม่ระบุชื่อก็ตาม เพื่อไม่ให้ข้อมูลเสียหาย
+        if (!selectedBat) {
+            alert("❌ แม้จะไม่ระบุชื่อผู้ลง แต่โปรดเลือกหน่วยสังกัดของท่านก่อนกดปุ่มนี้ครับ");
+            modalBattalion.focus();
+            return;
+        }
+
         currentRecorderName = "ไม่ระบุผู้ลง";
-        currentBattalion = "-";
+        currentBattalion = selectedBat;
         
         localStorage.setItem("healthy_soldier_user", "ไม่ระบุผู้ลง");
-        localStorage.setItem("healthy_soldier_battalion", "-");
+        localStorage.setItem("healthy_soldier_battalion", selectedBat);
         
         currentUserLabel.innerText = "ไม่ระบุผู้ลง";
-        currentBattalionLabel.innerText = "ไม่ระบุหน่วย";
-        inputBattalion.value = "-";
+        currentBattalionLabel.innerText = selectedBat;
+        inputBattalion.value = selectedBat; 
         
         loginModal.classList.add("hidden");
         modalUsername.value = "";
@@ -589,7 +599,7 @@
         document.getElementById("inputDate").valueAsDate = new Date();
         inputBattalion.value = currentBattalion; 
         formTitle.innerText = "แบบฟอร์มบันทึกข้อมูล";
-        btnSubmit.innerText = "💾 บันทึก";
+        btnSubmit.innerText = "💾 บันทึกสถิติ";
         btnSubmit.classList.remove("btn-edit-mode");
         btnCancelEdit.classList.add("hidden");
     }
