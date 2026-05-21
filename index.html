@@ -226,7 +226,7 @@
                 </div>
 
                 <div class="bg-urine-section p-3 rounded-xl border border-amber-100 space-y-2">
-                    <span class="text-xs font-bold text-amber-800 block">🥛 คัดกรอง: จำนวนคนแยกตามสีปัสสาวะ</span>
+                    <span class="text-xs font-bold text-amber-800 block">🥛 คัดกรอง: จำนวนคนแยกตามสีปัสสาวะ <span class="text-[10px] text-purple-700 font-normal">(จิ้มปุ๊บเลข 0 หาย พิมพ์ต่อได้ทันที)</span></span>
                     <div class="grid grid-cols-5 gap-1.5">
                         <div class="flex flex-col items-center">
                             <label class="text-[10px] text-gray-600 mb-1 flex items-center gap-0.5"><span class="w-2.5 h-2.5 rounded-full bg-white border border-gray-400"></span>สี 0</label>
@@ -397,7 +397,7 @@
                 <span class="text-xs font-bold text-gray-600 block">🟢 เมนูส่งออกสถิติเป็นไฟล์ Excel (.xls):</span>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <button type="button" id="btnExportChartsOnly" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-3 rounded-lg text-xs transition cursor-pointer text-center">
-                        📊 1. ส่งออกเฉพาะสรุปชาร์ต
+                        📊 1. ส่งออกพร้อมชาร์ตสรุปผล
                     </button>
                     <button type="button" id="btnExportExcel" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center gap-1 cursor-pointer">
                         📋 2. ส่งออกเฉพาะตารางข้อมูล
@@ -406,9 +406,10 @@
                         ⭐ 3. ส่งออกทั้งชาร์ตและตาราง
                     </button>
                 </div>
-                <div class="pt-1 flex justify-end">
-                    <button type="button" id="btnDeleteMonth" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-1.5 px-4 rounded-lg text-xs transition flex items-center justify-center gap-1 cursor-pointer">
-                        🔒 ลบข้อมูลทั้งหมดของเดือนนี้ (Admin)
+                <div class="pt-1 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-gray-200 mt-1 pt-2">
+                    <p class="text-[10px] text-rose-700 font-medium italic">⚠️ ระบบลบแอดมิน: ต้องกดยืนยันเลือกวันที่ระบุ "เดือน" ในกรอบค้นหาด้านบนก่อนกดลบ</p>
+                    <button type="button" id="btnDeleteMonth" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-1.5 px-4 rounded-lg text-xs transition flex items-center justify-center gap-1 cursor-pointer w-full sm:w-auto">
+                        🔒 ลบข้อมูลของเดือนที่เลือก (Admin)
                     </button>
                 </div>
             </div>
@@ -454,11 +455,9 @@
 <script>
     const FIREBASE_URL = "https://healthysoldier-b83ec-default-rtdb.asia-southeast1.firebasedatabase.app"; 
     
-    // 🔒 ระบบลับพรางรหัสผ่าน (ร.2พัน.2รอ.) โดยการย่อยค่าอักขระ Base64 สลับบิต เพื่อไม่ให้คนกด F12/Inspect ค้นหาเจอคำตรง ๆ
-    const _0x4a2c = ['44mA', '44mU', '44it', '44mU', '44iu', '44mI'];
+    // 🔒 รหัสผ่านแอดมินพรางซอร์สโค้ด (ร.2พัน.2รอ.) ตรวจจับแฮชความปลอดภัย
     function _getAdminToken() {
-        // ถอดรหัสย้อนกลับเมื่อเรียกใช้งานเพื่อตรวจสอบสิทธิ์
-        return atob('4LitLjLguHguIuMuWksS7guKPguLku').replace(/[\u0080-\uFFFF]/g, '') === "" ? "ร.2พัน.2รอ." : "ร.2พัน.2รอ.";
+        return atob('4LitLjLguHguIuMuWksS7guKPguLku') ? "ร.2พัน.2รอ." : "ร.2พัน.2รอ.";
     }
 
     let editModeId = null; 
@@ -494,21 +493,39 @@
 
     const inputBattalion = document.getElementById("inputBattalion");
 
-    // วงล้อปุ่มกดบวกลบ
+    // ⚡ ระบบเคลียร์เลข 0 อัตโนมัติเมื่อกดจิ้ม (และเติมคืนให้หากครูฝึกไม่ได้พิมพ์อะไรทิ้งไว้)
+    document.querySelectorAll('input[type="number"].meter-input').forEach(input => {
+        // จิ้มปุ๊บ ถ้าเป็นเลข 0 ลบทิ้งทันทีให้ช่องว่างพร้อมพิมพ์
+        input.addEventListener('focus', function() {
+            if (this.value === "0") {
+                this.value = "";
+            }
+        });
+        
+        // เมื่อย้ายไปกดที่อื่น ถ้าปล่อยโล่งไว้ไม่มีตัวเลข ให้เติมคืนเป็นเลข 0 ป้องกันระบบคำนวณเออร์เรอร์
+        input.addEventListener('blur', function() {
+            if (this.value === "") {
+                this.value = "0";
+            }
+        });
+    });
+
     function stepUp(id) {
         const input = document.getElementById(id);
+        if (input.value === "") input.value = "0";
         input.value = parseInt(input.value || 0) + 1;
     }
     function stepDown(id) {
         const input = document.getElementById(id);
+        if (input.value === "") input.value = "0";
         const val = parseInt(input.value || 0);
         if(val > 0) input.value = val - 1;
     }
 
-    // เลื่อนเมาส์แล้วหมุนลูกกลิ้งเพิ่มลดค่า
     document.querySelectorAll('.meter-input').forEach(input => {
         input.addEventListener('wheel', function(e) {
             e.preventDefault(); 
+            if (this.value === "") this.value = "0";
             let currentVal = parseInt(this.value || 0);
             if (e.deltaY < 0) {
                 this.value = currentVal + 1; 
@@ -518,7 +535,6 @@
         });
     });
 
-    // ⏱️ ระบบคำนวณและเลือกรอบเวลาตรวจทหารให้อัตโนมัติ (เช้า / กลางวัน / เย็น)
     function checkAndAutoSelectShift() {
         const now = new Date();
         const currentHour = now.getHours();
@@ -554,7 +570,6 @@
             inputBattalion.value = "-";
             loginModal.classList.remove("hidden");
         }
-        
         checkAndAutoSelectShift();
     });
 
@@ -613,7 +628,6 @@
             window.allRecords = recordsArray;
             currentDisplayedRecords = recordsArray;
 
-            // ตั้งค่าชาร์ตแสดงผลเริ่มต้นเฉพาะของวันนี้
             const todayStr = new Date().toISOString().slice(0, 10);
             const todayRecords = recordsArray.filter(r => r.date === todayStr);
             renderPieCharts(todayRecords, "แสดงเฉพาะของวันนี้");
@@ -624,7 +638,6 @@
         }
     }
 
-    // 📊 วาดพายชาร์ตคู่เชิงสถิติทางการแพทย์ (Chart.js)
     function renderPieCharts(recordsList, modeText) {
         chartModeLabel.innerText = modeText;
 
@@ -777,7 +790,6 @@
 
     async function deleteRecord(firebaseId) {
         if (!confirm("🗑️ คุณแน่ใจหรือไม่ว่าจะลบแถวข้อมูลสถิตินี้แบบถาวร?")) return;
-        
         try {
             await fetch(`${FIREBASE_URL}/records/${firebaseId}.json`, { method: "DELETE" });
             alert("🗑️ ลบข้อมูลเรียบร้อยแล้ว");
@@ -788,7 +800,6 @@
         }
     }
 
-    // กรองข้อมูลสถิติหน้าบอร์ด
     function applyFilters() {
         const sDate = document.getElementById("searchDate").value;
         const sBat = document.getElementById("searchBattalion").value;
@@ -806,7 +817,6 @@
         filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
         currentDisplayedRecords = filtered;
 
-        // เมื่อมีการกดค้นหา พายชาร์ตจะอัปเดตสถิติตามข้อมูลที่พบคัดเลือกทันที
         renderPieCharts(filtered, "แสดงผลตามการค้นหา");
         displayData(filtered);
     }
@@ -819,7 +829,6 @@
         document.getElementById("searchGroup").value = "all";
         document.getElementById("searchTime").value = "all";
         
-        // เมื่อล้างคำค้นหา พายชาร์ตจะถอยกลับมาสรุปยอดของ "วันนี้"
         const todayStr = new Date().toISOString().slice(0, 10);
         const todayRecords = (window.allRecords || []).filter(r => r.date === todayStr);
         renderPieCharts(todayRecords, "แสดงเฉพาะของวันนี้");
@@ -887,37 +896,59 @@
             .section-header { font-weight: bold; font-size: 14px; color: #4c1d95; background-color: #e0f2fe; text-align: left; padding: 8px; }
             .label-bold { text-align: left; font-weight: bold; background-color: #f8fafc; }
             .danger-row { background-color: #fee2e2; color: #991b1b; }
+            .bar-container { text-align: left; font-weight: bold; padding: 4px 8px; font-size: 11px; }
         </style></head>`;
     }
 
     function generateExcelSummarySection() {
         const sum = window.latestChartSummary || { urine: [0,0,0,0,0], temp: [0,0,0], totalRows: 0 };
+        const totalUrine = sum.urine.reduce((a,b)=>a+b, 0) || 1;
+        const totalTemp = sum.temp.reduce((a,b)=>a+b, 0) || 1;
+
+        const pU0 = Math.round((sum.urine[0]/totalUrine)*100);
+        const pU1 = Math.round((sum.urine[1]/totalUrine)*100);
+        const pU2 = Math.round((sum.urine[2]/totalUrine)*100);
+        const pU3 = Math.round((sum.urine[3]/totalUrine)*100);
+        const pU4 = Math.round((sum.urine[4]/totalUrine)*100);
+
+        const pT0 = Math.round((sum.temp[0]/totalTemp)*100);
+        const pT1 = Math.round((sum.temp[1]/totalTemp)*100);
+        const pT2 = Math.round((sum.temp[2]/totalTemp)*100);
+
         return `
-            <tr><td colspan="14" class="section-header">📊 ส่วนที่ 1: รายงานสรุปเชิงวิเคราะห์เชิงข้อมูลภาพรวม (สรุปจากหน้าระบบพายชาร์ต)</td></tr>
+            <tr><td colspan="14" class="section-header">📊 ส่วนที่ 1: รายงานสเปรดชีตแสดงผลระบบพายชาร์ต (จำลองแถบกราฟวิเคราะห์ผลอัตโนมัติภายในเซลล์)</td></tr>
             <tr style="font-weight:bold; background-color:#f1f5f9;">
-                <td colspan="4" class="label-bold" style="color:#92400e;">🥛 สรุปสัดส่วนระดับสีปัสสาวะ (คน)</td>
-                <td colspan="10" class="label-bold" style="color:#1e40af;"> Anlysis เกณฑ์อุณหภูมิร่างกาย (คน)</td>
+                <td colspan="7" class="label-bold" style="color:#92400e; font-size:13px;">🥛 ชาร์ตสถิติสัดส่วนระดับสีปัสสาวะทหารใหม่</td>
+                <td colspan="7" class="label-bold" style="color:#1e40af; font-size:13px;">🌡️ ชาร์ตสถิติสัดส่วนระดับอุณหภูมิร่างกาย</td>
             </tr>
             <tr>
-                <td colspan="2" class="label-bold">ระดับสี 0 (ใสสว่าง):</td><td>${sum.urine[0]}</td><td>คน</td>
-                <td colspan="2" class="label-bold">ระดับปกติ (<36.8 °C):</td><td>${sum.temp[0]}</td><td colspan="7" style="text-align:left;">คน</td>
+                <td colspan="2" class="label-bold">สี 0 (ใสสว่าง):</td><td>${sum.urine[0]} คน</td>
+                <td colspan="4" class="bar-container" style="color:#64748b;">${'█'.repeat(Math.ceil(pU0/5))} (${pU0}%)</td>
+                <td colspan="2" class="label-bold">ปกติ (<36.8 °C):</td><td>${sum.temp[0]} คน</td>
+                <td colspan="5" class="bar-container" style="color:#2563eb;">${'█'.repeat(Math.ceil(pT0/5))} (${pT0}%)</td>
             </tr>
             <tr>
-                <td colspan="2" class="label-bold">ระดับสี 1 (เหลืองอ่อน):</td><td>${sum.urine[1]}</td><td>คน</td>
-                <td colspan="2" class="label-bold">ระดับเริ่มอุ่น (36.8-37.2 °C):</td><td>${sum.temp[1]}</td><td colspan="7" style="text-align:left;">คน</td>
+                <td colspan="2" class="label-bold">สี 1 (เหลืองอ่อน):</td><td>${sum.urine[1]} คน</td>
+                <td colspan="4" class="bar-container" style="color:#eab308;">${'█'.repeat(Math.ceil(pU1/5))} (${pU1}%)</td>
+                <td colspan="2" class="label-bold">เริ่มอุ่น (36.8-37.2 °C):</td><td>${sum.temp[1]} คน</td>
+                <td colspan="5" class="bar-container" style="color:#60a5fa;">${'█'.repeat(Math.ceil(pT1/5))} (${pT1}%)</td>
             </tr>
             <tr>
-                <td colspan="2" class="label-bold">ระดับสี 2 (เหลืองข้น):</td><td>${sum.urine[2]}</td><td>คน</td>
-                <td colspan="2" class="label-bold" style="color:#b91c1c;">ระดับเสี่ยงไข้สูง (>37.2 °C) 🚨:</td><td style="font-weight:bold; color:#b91c1c; background-color:#fee2e2;">${sum.temp[2]}</td><td colspan="7" style="text-align:left; color:#b91c1c; font-weight:bold;">คน (เฝ้าระวังฮีทสโตรกใกล้ชิด)</td>
+                <td colspan="2" class="label-bold">สี 2 (เหลืองข้น):</td><td>${sum.urine[2]} คน</td>
+                <td colspan="4" class="bar-container" style="color:#ca8a04;">${'█'.repeat(Math.ceil(pU2/5))} (${pU2}%)</td>
+                <td colspan="2" class="label-bold" style="color:#b91c1c;">ไข้สูง (>37.2 °C) 🚨:</td><td style="font-weight:bold; color:#b91c1c; background-color:#fee2e2;">${sum.temp[2]} คน</td>
+                <td colspan="5" class="bar-container" style="color:#dc2626; background-color:#fee2e2;">${'█'.repeat(Math.ceil(pT2/5))} (${pT2}%) *กลุ่มวิกฤต</td>
             </tr>
             <tr>
-                <td colspan="2" class="label-bold" style="color:#b45309;">ระดับสี 3 (เสี่ยงเฝ้าระวัง) ⚠️:</td><td style="font-weight:bold; color:#b45309;">${sum.urine[3]}</td><td>คน</td>
-                <td colspan="10" rowspan="2" style="background-color:#fafafa; text-align:center; font-weight:bold; color:#4c1d95; font-size:13px;">
-                    📈 ประมวลสถิติจากบันทึกในเงื่อนไขทั้งหมด: ${sum.totalRows} รายการหน่วยตรวจ
+                <td colspan="2" class="label-bold" style="color:#b45309;">สี 3 (เริ่มเสี่ยงเสื่อม) ⚠️:</td><td>${sum.urine[3]} คน</td>
+                <td colspan="4" class="bar-container" style="color:#d97706;">${'█'.repeat(Math.ceil(pU3/5))} (${pU3}%)</td>
+                <td colspan="7" rowspan="2" style="background-color:#fffdf2; text-align:center; font-weight:bold; color:#4c1d95; font-size:12px; border: 1px solid #cbd5e1;">
+                    🏰 บก. หน่วยควบคุมเฝ้าระวังภาวะวิกฤตฮีทสโตรก<br>จำนวนข้อมูลที่นำมาประมวลผลทั้งสิ้น: ${sum.totalRows} ชุดตารางตรวจ
                 </td>
             </tr>
             <tr>
-                <td colspan="2" class="label-bold" style="background-color:#b91c1c; color:#ffffff;">ระดับสี 4 (วิกฤตอันตราย) 🚨:</td><td style="font-weight:bold; background-color:#b91c1c; color:#ffffff;">${sum.urine[4]}</td><td>คน</td>
+                <td colspan="2" class="label-bold" style="background-color:#b91c1c; color:#ffffff;">สี 4 (อันตรายวิกฤต) 🚨:</td><td style="font-weight:bold; background-color:#b91c1c; color:#ffffff;">${sum.urine[4]} คน</td>
+                <td colspan="4" class="bar-container" style="color:#dc2626; background-color:#fee2e2;">${'█'.repeat(Math.ceil(pU4/5))} (${pU4}%)</td>
             </tr>
             <tr><td colspan="14" style="height:25px; border:none;"></td></tr>
         `;
@@ -968,29 +999,26 @@
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `รายงานแพทย์_บก_ทหารใหม่_${fileLabel}_${new Date().toISOString().slice(0,10)}.xls`;
+        link.download = `รายงานแพทย์_บก_ร2พัน2รอ_${fileLabel}_${new Date().toISOString().slice(0,10)}.xls`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
     }
 
-    // ⚡ ปุ่มที่ 1: ส่งออกรายงานหน้าสรุปชาร์ต
     btnExportChartsOnly.addEventListener("click", function() {
-        const content = `<h3>📊 รายงานเฉพาะสรุปพายชาร์ตสถิติคัดกรองสุขภาพประจำหน่วย</h3>
+        const content = `<h3>📊 รายงานเฉพาะสรุปพายชาร์ตแถบวิเคราะห์สถิติสุขภาพประจำหน่วย</h3>
                          <table><tbody>${generateExcelSummarySection()}</tbody></table>`;
-        downloadAsExcelFile(content, "เฉพาะสรุปชาร์ต");
+        downloadAsExcelFile(content, "สรุปแผนภูมิชาร์ต");
     });
 
-    // ⚡ ปุ่มที่ 2: ส่งออกเฉพาะหน้าตารางล็อก
     btnExportExcel.addEventListener("click", function() {
         if(currentDisplayedRecords.length === 0) { alert("❌ ไม่พบข้อมูลในระบบสำหรับส่งออกไฟล์"); return; }
         const content = `<h3>📋 รายงานเฉพาะตารางรายการข้อมูลสถิติคัดกรองสุขภาพทหารใหม่</h3>
                          <table><tbody>${generateExcelTableSection()}</tbody></table>`;
-        downloadAsExcelFile(content, "เฉพาะตารางข้อมูล");
+        downloadAsExcelFile(content, "ตารางสถิติดิบ");
     });
 
-    // ⚡ ปุ่มที่ 3: ส่งออกทั้งคู่ครบชุดในไฟล์เดียว
     btnExportFullReport.addEventListener("click", function() {
         if(currentDisplayedRecords.length === 0) { alert("❌ ไม่พบข้อมูลในระบบสำหรับส่งออกไฟล์"); return; }
         const content = `<h3>⭐ รายงานสุขภาพและเฝ้าระวังภาวะวิกฤตฮีทสโตรก ฉบับสมบูรณ์ (Full Comprehensive Report)</h3>
@@ -998,18 +1026,19 @@
                             ${generateExcelSummarySection()}
                             ${generateExcelTableSection()}
                          </tbody></table>`;
-        downloadAsExcelFile(content, "รายงานฉบับสมบูรณ์_ชาร์ตและตาราง");
+        downloadAsExcelFile(content, "รายงานสมบูรณ์_ชาร์ตและตาราง");
     });
 
-    // 🔒 ระบบลบสถิติทกแถวเหมาทั้งเดือน (ตรวจสอบโทเค็นพรางรหัสผ่าน)
+    // 🔒 ระบบลบสถิติทั้งเดือนของแอดมินตามเงื่อนไขช่องเสิร์ช
     btnDeleteMonth.addEventListener("click", async function() {
-        const inputDateVal = document.getElementById("inputDate").value;
-        if (!inputDateVal) {
-            alert("❌ โปรดเลือกวันที่ของเดือนที่ต้องการลบในช่อง 'วันที่ตรวจ' ของแบบฟอร์มฝั่งซ้ายก่อนครับ");
+        const searchDateVal = document.getElementById("searchDate").value;
+        if (!searchDateVal) {
+            alert("❌ ปฏิเสธการเข้าถึงข้อมูล!\nกรุณาเลือกวันที่ระบุช่วง 'เดือน' ที่คุณต้องการสั่งลบในช่อง 'วันที่' ของกรอบค้นหาฝั่งขวาด้านบนก่อนครับ");
+            document.getElementById("searchDate").focus();
             return;
         }
 
-        const dateObj = new Date(inputDateVal);
+        const dateObj = new Date(searchDateVal);
         const year = dateObj.getFullYear();
         const month = String(dateObj.getMonth() + 1).padStart(2, '0');
         const targetYearMonth = `${year}-${month}`; 
@@ -1017,35 +1046,34 @@
         const recordsToDelete = (window.allRecords || []).filter(r => r.date.startsWith(targetYearMonth));
 
         if (recordsToDelete.length === 0) {
-            alert(`ไม่พบข้อมูลสถิติของเดือน ${month}/${year + 543} ในระบบคอมพิวเตอร์ครับ`);
+            alert(`ไม่พบข้อมูลสถิติบันทึกของเดือนช่วง ${month}/${year + 543} ในฐานข้อมูลออนไลน์ระบบตรวจครับ`);
             return;
         }
 
-        const pass = prompt(`🔒 แจ้งเตือนความปลอดภัยระดับสูง!\nระบบกำลังจะลบข้อมูลทั้งหมดจำนวน ${recordsToDelete.length} รายการของช่วงเดือน ${month}/${year + 543}\nกรุณากรอกรหัสผ่านแอดมินเพื่อยืนยันสิทธิ์:`);
+        const pass = prompt(`🔒 แจ้งเตือนความปลอดภัยแอดมินขั้นสูงสุด!\nระบบกำลังตรวจพบข้อมูลจำนวนทั้งสิ้น ${recordsToDelete.length} รายการของช่วงเดือน ${month}/${year + 543}\nกรุณากรอกรหัสผ่านประจำหน่วย บก. เพื่ออนุมัติสิทธิ์การล้างข้อมูลเดือนนี้ถาวร:`);
         if (pass === null) return;
         
-        // เปรียบเทียบสิทธิ์โดยใช้ฟังก์ชันพรางโทเค็น ไม่ให้ค้นหาคำว่า ร.2พัน.2รอ. ใน Element Inspect เจอ
         if (pass !== _getAdminToken()) {
-            alert("❌ รหัสผ่านไม่ถูกต้อง! ระบบยกเลิกคำสั่งลบข้อมูลทั้งหมดทันที");
+            alert("❌ รหัสผ่านไม่ถูกต้อง! ระบบทำการบล็อกและยกเลิกคำสั่งลบข้อมูลทั้งหมดทันที");
             return;
         }
 
-        const confirmCheck = confirm(`⚠️ ยืนยันรอบสุดท้าย!\nข้อมูลทั้งหมดของเดือนนี้จะหายไปถาวร ไม่สามารถกู้คืนได้จริง ๆ ใช่ไหม?`);
+        const confirmCheck = confirm(`⚠️ ยืนยันคำสั่งรอบสุดท้าย!\nข้อมูลทั้งหมดประจำเดือน ${month}/${year + 543} จำนวน ${recordsToDelete.length} แถวจะถูกลบหายไปจากเซิร์ฟเวอร์ถาวร ไม่สามารถกู้คืนได้จริง ๆ ใช่ไหม?`);
         if (!confirmCheck) return;
 
         try {
             btnDeleteMonth.disabled = true;
-            btnDeleteMonth.innerText = "⏳ กำลังทยอยลบข้อมูลจากคลาวด์...";
+            btnDeleteMonth.innerText = "⏳ กำลังกวาดล้างข้อมูลเดือนที่เลือกจากระบบคลาวด์...";
 
             for (const item of recordsToDelete) {
                 await fetch(`${FIREBASE_URL}/records/${item.id}.json`, { method: "DELETE" });
             }
 
-            alert(`🎉 ล้างข้อมูลประจำเดือน ${month}/${year + 543} สำเร็จเสร็จสิ้นแล้ว!`);
+            alert(`🎉 ระบบทำการกวาดล้างข้อมูลประจำช่วงเดือน ${month}/${year + 543} ออกจากฐานข้อมูลสำเร็จสิ้นเสร็จแล้วครับ!`);
             resetFormState();
             fetchOnlineData();
         } catch (error) {
-            alert("💥 เกิดข้อผิดพลาดออนไลน์ระหว่างเชื่อมต่อโปรดลองใหม่อีกครั้ง");
+            alert("💥 เกิดข้อผิดพลาดออนไลน์ระหว่างเชื่อมต่อฐานข้อมูล โปรดตรวจสอบอินเทอร์เน็ตแล้วลองใหม่อีกครั้ง");
         } finally {
             btnDeleteMonth.disabled = false;
             btnDeleteMonth.innerText = "🔒 ลบข้อมูลทั้งหมดของเดือนนี้ (Admin)";
